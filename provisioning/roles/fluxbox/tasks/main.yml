@@ -1,0 +1,31 @@
+---
+
+- name: Ensure fluxbox is installed
+  apt:
+    name: fluxbox
+    state: latest
+    cache_valid_time: 86400
+  notify:
+    - restart lightdm
+
+- name: Ensure vagrant user's .fluxbox folder exists
+  file:
+    path: /home/vagrant/.fluxbox
+    state: directory
+    owner: vagrant
+    group: vagrant
+
+- name: Configure fluxbox init
+  template:
+    src: init
+    dest: /home/vagrant/.fluxbox/init
+
+- name: Configure fluxbox menu
+  template:
+    src: menu
+    dest: /home/vagrant/.fluxbox/menu
+
+- name: Configure fluxbox startup
+  template:
+    src: startup
+    dest: /home/vagrant/.fluxbox/startup

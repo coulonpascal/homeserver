@@ -1,0 +1,10 @@
+---
+
+nodejs_version: "7.x"
+pg_version: 9.5
+pgis_version: 2.3
+geoserver_major_version: 2
+geoserver_minor_version: 10
+geoserver_revision_version: 5
+geoserver_version: "{{ geoserver_major_version }}.{{ geoserver_minor_version }}.{{ geoserver_revision_version }}"
+geogig_version: 1.1.1

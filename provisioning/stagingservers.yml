@@ -1,0 +1,13 @@
+---
+
+- hosts: stagingservers
+  roles:
+    - common
+    - tools
+    - tomcat
+    - lamp
+    - drupal
+    - geoserver
+    - geos
+    - gdal
+    - dgmap-dbuser

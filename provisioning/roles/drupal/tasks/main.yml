@@ -1,0 +1,37 @@
+---
+
+- name: Check for installed drupal
+  stat:
+    path: /var/www/drupal
+  register: drupal_installed
+
+- name: Check installed drupal version
+  shell: drush status "drupal version" | grep -o '[0-9.]*'
+  args:
+    chdir: /var/www/drupal
+  register: found_drupal_version
+  when: drupal_installed.stat.exists == True
+
+- name: Download and install Drupal {{ drupal_version }}
+  shell: drush dl drupal-{{ drupal_version }} --destination=/var/www/ --drupal-project-rename=drupal
+  when: drupal_installed.stat.exists == False
+
+- name: Update Drupal to {{ drupal_version }}
+  shell: drush @sites pm-update drupal-{{ drupal_version }} -y
+  args:
+    chdir: /var/www/drupal/sites/portal
+  when: drupal_installed.stat.exists == True and (found_drupal_version.stdout | version_compare(drupal_version, '=')) == False
+
+- name: Apply drupal patch 2324701
+  patch:
+    remote_src: no
+    src: drupal-n2324701-14.patch
+    basedir: /var/www/drupal
+    strip: 1
+    
+- name: Apply drupal patch 1705618
+  patch:
+    remote_src: no
+    src: form-single-submit-1705618-130.patch
+    basedir: /var/www/drupal
+    strip: 1

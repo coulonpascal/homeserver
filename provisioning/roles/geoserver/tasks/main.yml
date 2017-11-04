@@ -1,0 +1,60 @@
+---
+
+- name: Extract geoserver WAR
+  unarchive:
+    src: https://sourceforge.net/projects/geoserver/files/GeoServer/{{ geoserver_version }}/geoserver-{{ geoserver_version }}-war.zip    
+    dest: /tmp
+    remote_src: true
+    creates: /var/lib/tomcat7/webapps/geo.war
+
+- name: Move geoserver WAR to tomcat
+  command: mv /tmp/geoserver.war /var/lib/tomcat7/webapps/geo.war
+  args:
+    creates: /var/lib/tomcat7/webapps/geo.war
+  notify: restart tomcat
+
+- name: Create /data folder
+  file:
+    path: /data
+    state: directory
+    owner: tomcat7
+    group: tomcat7
+
+- name: add available site proxying /geo to geoserver in apache
+  template:
+    src: geoserver.conf
+    dest: /etc/apache2/sites-available/geoserver.conf
+
+- name: add symlink to enable geoserver site in apache
+  file:
+    path: /etc/apache2/sites-enabled/geoserver.conf
+    state: link
+    src: /etc/apache2/sites-available/geoserver.conf
+  notify: restart apache
+
+- name: Flush handlers to ensure geoserver war is deployed
+  meta: flush_handlers
+
+- name: Extract geoserver wps extension
+  unarchive:
+    src: http://downloads.sourceforge.net/project/geoserver/GeoServer/{{ geoserver_version }}/extensions/geoserver-{{ geoserver_version }}-{{ item.name }}-plugin.zip
+    dest: /var/lib/tomcat7/webapps/geo/WEB-INF/lib/
+    remote_src: true
+    creates: /var/lib/tomcat7/webapps/geo/WEB-INF/lib/{{ item.file }}-{{ geoserver_version }}.jar
+  with_items:
+    - name: wps
+      file: gs-wps-core
+    - name: printing
+      file: gs-printing
+    - name: importer
+      file: gs-importer-core
+    - name: importer-bdb
+      file: gs-importer-bdb
+  notify: restart tomcat
+
+- name: Ensure tomcat7 owns all webapps files
+  file:
+    path: /var/lib/tomcat7/webapps/
+    recurse: true
+    owner: tomcat7
+    group: tomcat7

@@ -1,0 +1,16 @@
+---
+
+- name: Extract geoserver geogig extension
+  unarchive:
+    src: https://github.com/locationtech/geogig/releases/download/v{{ geogig_version }}/geoserver-{{ geoserver_major_version }}.{{ geoserver_minor_version }}.x-geogig-plugin.zip
+    dest: /var/lib/tomcat7/webapps/geo/WEB-INF/lib/
+    remote_src: true
+    creates: /var/lib/tomcat7/webapps/geo/WEB-INF/lib/geogig-core-{{ geogig_version }}.jar
+  notify: restart tomcat
+
+- name: Extract geogig cli
+  unarchive:
+    src: http://download.locationtech.org/geogig/geogig-{{ geogig_version }}.zip
+    dest: /home/vagrant
+    remote_src: true
+    creates: /home/vagrant/geogig/bin/geogig

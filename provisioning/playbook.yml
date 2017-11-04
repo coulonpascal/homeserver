@@ -1,0 +1,14 @@
+---
+
+- hosts: default
+  roles:
+    - common
+    - debops.secret
+    - geerlingguy.nodejs
+    - tools    
+    - apache
+    - apache-dev
+    - postgres
+    - xfce
+    - fluxbox
+    - owncloud

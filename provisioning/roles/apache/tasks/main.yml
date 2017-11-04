@@ -1,0 +1,26 @@
+---
+
+- name: Ensure apache is up to date
+  apt:
+    name: apache2
+    state: latest
+    cache_valid_time: 86400
+
+- name: Configure httpd.conf
+  template:
+    src: httpd.conf
+    dest: /etc/apache2/httpd.conf
+
+- name: Remove default vhost
+  file:
+    path: /etc/apache2/sites-enabled/000-default.conf
+    state: absent
+
+- name: Enable apache modules
+  apache2_module:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - rewrite
+    - proxy_http
+  notify: restart apache

@@ -1,0 +1,65 @@
+---
+
+- name: Add ubuntugis-unstable PPA
+  apt_repository:
+    repo: "ppa:ubuntugis/ubuntugis-unstable"
+    state: present
+    update_cache: yes
+
+- name: Ensure PostgreSQL {{ pg_version }} is installed
+  apt:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - postgresql-{{ pg_version }}
+    - postgresql-contrib-{{ pg_version }}
+  notify: restart postgres
+
+- name: Ensure PostGIS {{ pgis_version }} is installed
+  apt:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - postgis
+    - postgresql-{{ pg_version }}-postgis-{{ pgis_version }}
+  notify: restart postgres
+
+- name: Start postgresql
+  service:
+    name: postgresql
+    state: started
+    
+- name: Ensure pgadmin3 is installed
+  apt:
+    name: pgadmin3
+    state: latest
+
+- name: Ensure PostgreSQL python adapters are installed
+  apt:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - libpq-dev
+    - python-psycopg2
+
+- name: Set PostgreSQL to listen on all ip addresses
+  replace:
+    regexp: "#listen_addresses = \'localhost\'"
+    replace: listen_addresses = '*'
+    path: /etc/postgresql/{{ pg_version }}/main/postgresql.conf
+  notify: restart postgres
+
+- name: Allow md5 locally
+  replace:
+    regexp: local    all             all             all                     md5'
+    replace: local    all             all             md5
+    path: /etc/postgresql/{{ pg_version }}/main/pg_hba.conf
+  notify: restart postgres
+
+- name: Add host password auth
+  lineinfile:
+    state: present
+    insertafter: EOF
+    line: host    all             all             127.0.0.1/32                     md5
+    path: /etc/postgresql/{{ pg_version }}/main/pg_hba.conf
+  notify: restart postgres

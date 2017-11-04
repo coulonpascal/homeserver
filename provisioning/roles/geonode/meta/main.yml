@@ -1,0 +1,8 @@
+---
+
+dependencies:
+  - { role: python }
+  - { role: geerlingguy.nodejs }
+  - { role: gdal }
+  - { role: geoserver }
+  - { role: geogig }

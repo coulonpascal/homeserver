@@ -1,0 +1,20 @@
+---
+
+- name: Ensure tomcat 7 is installed
+  apt:
+    name: "{{ item }}"
+    state: latest
+    cache_valid_time: 86400
+  with_items:
+    - default-jdk
+    - tomcat7
+
+- name: Configure memory for Tomcat
+  template:
+    src: setenv.sh
+    dest: /usr/share/tomcat7/bin/setenv.sh
+
+- name: Configure java runtime for Tomcat
+  template:
+    src: tomcat7
+    dest: /etc/default/tomcat7

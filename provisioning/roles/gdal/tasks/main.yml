@@ -1,0 +1,21 @@
+---
+
+- name: Add gdal PPA
+  apt_repository:
+    repo: "ppa:ubuntugis/ubuntugis-unstable"
+    state: present
+    update_cache: yes
+
+- name: Ensure gdal is installed
+  apt:
+    name: gdal-bin #=1.11.3+dfsg-3build2
+    state: present
+    cache_valid_time: 86400
+    force: yes
+
+- name: Ensure gdal-dev is installed
+  apt:
+    name: libgdal-dev #=1.11.3+dfsg-3build2
+    state: present
+    cache_valid_time: 86400
+    force: yes

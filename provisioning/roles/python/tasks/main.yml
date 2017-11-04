@@ -1,0 +1,22 @@
+---
+
+- name: Ensure python apt packages are installed
+  apt:
+    name: "{{ item }}"
+    state: latest
+    cache_valid_time: 86400
+  with_items:
+    - python
+    - python-pip
+    - python-virtualenv
+    - python-dev
+    - python-gdal
+    - python-pycurl
+    - python-imaging
+    - python-lxml
+    - python-pastescript
+    - python-psycopg2
+    - python-urlgrabber
+    - python-ldap
+    - python-pylibmc
+    - python-software-properties

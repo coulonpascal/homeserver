@@ -1,0 +1,1 @@
+export CATALINA_OPTS=" -Xms2048m -Xmx4096m -XX:MaxPermSize=256m"

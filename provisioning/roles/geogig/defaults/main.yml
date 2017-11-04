@@ -1,0 +1,6 @@
+---
+# Defaults are used to set default values for all the role variables,
+# they usually act as customization points of the role.
+geoserver_major_version: 2
+geoserver_minor_version: 10
+geogig_version: 1.1.1

@@ -1,0 +1,216 @@
+---
+
+- name: Ensure geonode dependencies are installed
+  apt:
+    name: "{{ item }}"
+    state: latest
+    cache_valid_time: 86400
+  with_items:
+    - libapache2-mod-wsgi
+    - libgeos-dev
+    - libjpeg-dev
+    - libpng-dev
+    - libpq-dev
+    - libproj-dev
+    - libxml2-dev
+    - libgdal-dev
+    - libxslt-dev
+    - libmemcached-dev
+    - libsasl2-dev
+    - zlib1g-dev
+    - software-properties-common
+
+- name: Ensure bower is installed globally
+  npm:
+    name: bower
+    global: yes
+    state: latest
+
+- name: Upgrade pip
+  pip:
+    name: pip
+    state: latest
+
+- name: Ensure pip gdal module is installed
+  pip:
+    name: GDAl
+    version: 2.2.1
+    state: present
+    virtualenv: /var/venv/geonode
+    virtualenv_python: python2.7
+  environment:
+    CPLUS_INCLUDE_PATH: /usr/include/gdal
+    C_INCLUDE_PATH: /usr/include/gdal
+
+- name: Enable apache modules
+  apache2_module:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - wsgi
+    - rewrite
+    - proxy_http
+  notify: restart apache
+
+- name: Copy web.xml into place
+  copy:
+    src: web.xml
+    dest: /var/lib/tomcat7/webapps/geo/WEB-INF/web.xml
+    owner: tomcat7
+    group: tomcat7
+  notify: restart tomcat
+
+#build.geonode.org/geoserver/latest/geonode-geoserver-ext-2.10-SNAPSHOT-geoserver-plugin.zip
+- name: Extract geoserver geonode extension
+  unarchive:
+    src: geonode-geoserver-ext-2.10-SNAPSHOT-geoserver-plugin.zip
+    dest: /var/lib/tomcat7/webapps/geo/WEB-INF/lib/
+    creates: /var/lib/tomcat7/webapps/geo/WEB-INF/lib/geonode-geoserver-ext-2.10-SNAPSHOT.jar
+
+- name: Create geonode postgres user
+  become: true
+  become_user: postgres
+  postgresql_user:
+    name: geonode
+    state: present
+    password: vHNhlkWw
+
+- name: Create geonode databases
+  become: true
+  become_user: postgres
+  postgresql_db:
+    name: "{{ item }}"
+    state: present
+    owner: geonode
+    encoding: UTF8
+  with_items:
+    - geonode
+    - geonode_data
+
+- name: Install postgis into geonode_data
+  become: true
+  become_user: postgres
+  postgresql_ext:
+    name: postgis
+    state: present
+    db: geonode_data
+
+- name: Grant privileges on geonode_data spatial tables to public
+  become: true
+  become_user: postgres
+  postgresql_privs:
+    database: geonode_data
+    roles: PUBLIC
+    objs: geometry_columns,spatial_ref_sys
+    privs: ALL
+
+- name: Clone portal repository
+  git:
+    repo: http://esdch-svmapcode.scisys.co.uk/geonode-cartosys/cartosys-geonode-portal.git
+    dest: /var/www/cartosys
+    update: no
+
+- name: Install portal requirements with pip
+  pip:
+    virtualenv: /var/venv/geonode
+    virtualenv_python: python2.7
+    chdir: /var/www/cartosys
+    requirements: ./requirements.txt
+
+- name: Set permissions for /var/www/cartosys
+  file:
+    path: /var/www/cartosys
+    recurse: yes
+    owner: www-data
+    group: www-data
+    mode: g+w
+
+- name: Ensure GEOSERVER_DATA path exists
+  file:
+    path: /data/GEOSERVER_DATA
+    state: directory
+
+- name: Link geoserver data to /data
+  file:
+    path: /data/GEOSERVER_DATA/cartosys_data
+    state: link
+    src: /var/www/cartosys/geoserver
+
+- name: Ensure geonode subfolders exist
+  file:
+    path: "/var/www/cartosys/{{ item }}"
+    state: directory
+  with_items:
+    - apps
+    - cartosys/uploaded/thumbs
+    - cartosys/uploaded/layers
+    - static
+    - cartosys/static
+    - cartosys/media
+    - cartosys/apps
+
+- name: Install bower packages
+  bower:
+    path: /var/www/cartosys
+    state: latest
+
+- name: Make missing migrations
+  command: /var/venv/geonode/bin/python manage.py makemigrations
+  args:
+    chdir: /var/www/cartosys
+
+- name: Migrate missing dependency apps
+  command: /var/venv/geonode/bin/python manage.py migrate {{ item }} --noinput
+  args:
+    chdir: /var/www/cartosys
+  with_items:
+    - account
+    - sites
+    - _api
+    - people
+    -
+
+- name: Create apache site configuration for cartosys
+  copy:
+    src: geonode-cartosys.conf
+    dest: /etc/apache2/sites-available
+  notify:
+    - restart apache
+
+- name: Enable apache site configuration for cartosys
+  file:
+    path: /etc/apache2/sites-enabled/geonode-cartosys.conf
+    src: /etc/apache2/sites-available/geonode-cartosys.conf
+    state: link
+  notify:
+    - restart apache
+
+- name: Collect statics
+  command: /var/venv/geonode/bin/python manage.py collectstatic --noinput
+  args:
+    chdir: /var/www/cartosys
+  
+- name: Re-set permissions on statics
+  file:
+    path: /var/www/cartosys/static
+    mode: 0777
+    recurse: true
+
+- name: Create admin user
+  shell: echo "from django.contrib.auth import get_user_model; get_user_model().objects.create_superuser('admin', 'Felling.Licence@scisys.co.uk', 'password')" | /var/venv/geonode/bin/python manage.py shell
+  args:
+    chdir: /var/www/cartosys
+
+- name: Set permissions on virtual env
+  file:
+    path: /var/venv/geonode
+    recurse: true
+    mode: 0777
+
+- name: Load fixtures
+  command: /var/venv/geonode/bin/python manage.py loaddata {{ item }}
+  args:
+    chdir: /var/www/cartosys
+  with_items:
+    - json/default_oauth_apps.json
+    - json/app_stores.json

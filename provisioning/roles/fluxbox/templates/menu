@@ -1,0 +1,9 @@
+[begin] (fluxbox)
+        [exec] (xterm) {/usr/bin/xterm}
+        [exec] (code) {/usr/bin/code}
+        [exec] (firefox) {/usr/bin/firefox}
+        [exec] (chrome) {/usr/bin/chromium-browser}
+        [exec] (qgit) {cd /var/www/drupal/sites; qgit --all}
+        [exec] (slack) {/usr/bin/slack}
+        [include] (/etc/X11/fluxbox/fluxbox-menu)
+[end]

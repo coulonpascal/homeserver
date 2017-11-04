@@ -1,0 +1,39 @@
+---
+
+- name: Check for installed geos
+  stat:
+    path: /usr/local/lib/libgeos.so
+  register: geos_installed
+  
+- block:
+  - name: Create temp folder for geos source
+    file:
+      path: /tmp/src/geos
+      state: directory
+
+  - name: Extract geos source code
+    unarchive:
+      src: geos-3.5.1.tar.bz2
+      dest: /tmp/src/geos
+      remote_src: false
+
+  - name: Configure geos with php
+    command: /tmp/src/geos/geos-3.5.1/configure --enable-php
+    args:
+      chdir: /tmp/src/geos/geos-3.5.1
+
+  - name: Build geos
+    make:
+      chdir: /tmp/src/geos/geos-3.5.1
+
+  - name: Install geos
+    make:
+      chdir: /tmp/src/geos/geos-3.5.1
+      target: install
+
+  - name: Clean up geos source
+    file:
+      path: /tmp/src/geos
+      state: absent
+
+  when: geos_installed.stat.exists == False

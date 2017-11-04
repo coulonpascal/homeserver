@@ -1,0 +1,39 @@
+---
+
+- name: Check for installed php-geos
+  stat:
+    path: /usr/lib/php/20131226/geos.so
+  register: php_geos_installed
+
+- block:
+  - name: clone php-geos
+    git:
+      repo: https://git.osgeo.org/gogs/geos/php-geos.git
+      dest: /tmp/src/php-geos
+      
+  - name: autogen and configure php-geos
+    shell: ./autogen.sh && ./configure
+    args:
+      chdir: /tmp/src/php-geos
+
+  - name: make php-geos
+    make:
+      chdir: /tmp/src/php-geos
+
+  - name: install php-geos
+    make:
+      chdir: /tmp/src/php-geos
+      target: install
+  
+  when: php_geos_installed.stat.exists == False
+
+- name: create module config for php-geos
+  template:
+    src: geos.ini
+    dest: /etc/php/5.6/mods-available/geos.ini
+
+- name: enable php-geos module
+  shell: phpenmod geos
+  args:
+    creates: /etc/php/5.6/apache2/conf.d/20-geos.ini
+  notify: restart apache
