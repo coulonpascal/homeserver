@@ -1,2 +1,0 @@
-# homeserver
-my home server

@@ -1,0 +1,4 @@
+---
+
+gitlab_package_signing_key: 1A4C919DB987D435939638B914219A96E15E78F4
+gitlab_gpg_key: https://packages.gitlab.com/runner/gitlab-ci-multi-runner/gpgkey

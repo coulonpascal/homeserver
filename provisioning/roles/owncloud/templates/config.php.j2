@@ -1,0 +1,27 @@
+<?php
+$CONFIG = array (
+  'updatechecker' => false,
+  'passwordsalt' => 'AoTJ3NnNTcblAQFYQ77q++8zuCcY/O',
+  'secret' => '8D4hpt/5AoWA51+7D2faFCFYmAS2Z6jyXe/KrGE7uGraCPBv',
+  'trusted_domains' => array (
+{% for domain in owncloud_trusted_domains %}
+    '{{domain}}',
+{% endfor %}
+  ),
+  'datadirectory' => '{{owncloud_data_path}}',
+  'overwriteprotocol' => '{{owncloud_url | regex_replace("(https?)://.*", "\\1")}}',
+  'overwrite.cli.url' => '{{owncloud_url}}',
+  'htaccess.RewriteBase' => '{{owncloud_url | regex_replace("^https?://[\w\d+-.]+(:[\d]+)?(.*)", "\\2") | regex_replace("/$", "")}}/',
+  'dbtype' => '{{owncloud_db_type}}',
+  'dbname' => '{{owncloud_db_name}}',
+  'dbhost' => '{{owncloud_db_host}}',
+  'dbtableprefix' => 'oc_',
+  'dbuser' => '{{owncloud_db_user}}',
+  'dbpassword' => '{{owncloud_db_pass}}',
+  'logtimezone' => 'UTC',
+  'memcache.local' => '\\OC\\Memcache\\APCu',
+  'instanceid' => 'ocko4t4uazwc',
+  'ldapIgnoreNamingRules' => false,
+  'version' => '{{owncloud__r_version.stdout}}',
+  'installed' => true,
+);

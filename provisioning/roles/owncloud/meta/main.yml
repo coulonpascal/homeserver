@@ -1,39 +1,16 @@
 ---
-
-dependencies:
-
-  - role: debops.secret
-
 galaxy_info:
-
-  company: 'DebOps'
-  author: 'Maciej Delmanowski, Hartmut Goebel, Robin Schneider'
-  description: 'Install and manage ownCloud instance'
-  license: 'GPL-3.0'
-  min_ansible_version: '2.1.4'
-
+  author: Luis Gracia
+  description: Install and configure ownCloud
+  license: MIT
+  min_ansible_version: 2.2
   platforms:
-
-    - name: Debian
+    - name: EL
       versions:
-        - jessie
-
-        ## Main target, used in production.
-        - stretch
-
-    - name: Ubuntu
-      versions:
-        ## CI testing target
-        - trusty
-
+        - 7
   galaxy_tags:
+    - application
     - cloud
-    - private
-    - privacy
-    - sharing
-    - files
-    - calender
-    - contacts
+    - collaboration
     - web
-    - owncloud
-    - nextcloud
+dependencies: []

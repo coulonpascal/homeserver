@@ -12,10 +12,9 @@ Vagrant.configure("2") do |config|
 
   # Every Vagrant development environment requires a box. You can search for
   # boxes at https://atlas.hashicorp.com/search.
-  config.vm.box = "ubuntu/xenial64"
-     
+  config.vm.box = "bento/ubuntu-18.04" 
   config.vm.provider "virtualbox" do |vb|
-    vb.name = "HomeServer"
+    vb.name = "home-server"
     
     # Display the VirtualBox GUI when booting the machine
     vb.gui = false
@@ -24,18 +23,11 @@ Vagrant.configure("2") do |config|
     vb.memory = "8192"
      
     # Customize the amount of video memory on the VM: 
-    vb.customize ["modifyvm", :id, "--vram", "64"]
-    
-    # Paravirtualization interfaces to improve time-keeping accuracy and performance of guest operating systems.
-    # kvm recommended for Linux.
-    vb.customize ["modifyvm", :id, "--paravirtprovider", "kvm"]
-    
-    # Enable the VM's virtual USB controller & enable the virtual USB 3.0 controller
-    # vb.customize ["modifyvm", :id, "--usbxhci", "on"]
-      
-    # PAE and NX capabilities of the host CPU will be exposed to the virtual machine
-    vb.customize ["modifyvm", :id, "--pae", "on"] 
-    
+    vb.customize ["modifyvm", :id, "--vram", "128"]
+             
+    # Put VMs in a virtualbox group
+    vb.customize ["modifyvm", :id, "--groups", "/Perso"]
+
     # set monitorcount from environment
     monitorCount = ENV['monitorcount'] || "1"
     vb.customize ["modifyvm", :id, "--monitorcount", monitorCount]
@@ -56,7 +48,7 @@ Vagrant.configure("2") do |config|
   config.vm.network :forwarded_port, guest: 8000, host: 8000
 
   config.vm.provision "ansible_local" do |ansible|
-    ansible.playbook = "provisioning/playbook.yml"
+    ansible.playbook = "provisioning/playbook.yml"    
     ansible.become = true
   end
   
@@ -73,7 +65,7 @@ Vagrant.configure("2") do |config|
   # the path on the host to the actual folder. The second argument is
   # the path on the guest to mount the folder. And the optional third
   # argument is a set of non-required options.
-  # config.vm.synced_folder "./", "/vagrant_data"
+  config.vm.synced_folder "./", "/vagrant"
      
   #
   # View the documentation for the provider you are using for more

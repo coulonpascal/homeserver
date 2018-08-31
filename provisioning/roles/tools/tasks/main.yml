@@ -11,9 +11,6 @@
     - unzip
     - g++
     - make
-    - qgit
     - dos2unix
     - vim
-    - firefox
-    - chromium-browser
     - build-essential

@@ -1,8 +1,2 @@
 [dev]
 default
-
-[buildservers]
-esdch-svukpn-bld
-
-[stagingservers]
-esdch-svukpn-stag

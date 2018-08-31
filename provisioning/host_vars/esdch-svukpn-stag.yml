@@ -1,5 +1,0 @@
----
-
-ansible_host: esdch-svukpn-stag.scisys.co.uk
-ansible_user: admin_esd
-ansible_become: true

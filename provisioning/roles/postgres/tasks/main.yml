@@ -29,10 +29,10 @@
     name: postgresql
     state: started
     
-- name: Ensure pgadmin3 is installed
-  apt:
-    name: pgadmin3
-    state: latest
+# - name: Ensure pgadmin3 is installed
+#   apt:
+#     name: pgadmin3
+#     state: latest
 
 - name: Ensure PostgreSQL python adapters are installed
   apt:

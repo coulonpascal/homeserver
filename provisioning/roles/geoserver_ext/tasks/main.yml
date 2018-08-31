@@ -1,0 +1,37 @@
+---
+
+- name: Get the gwc s3 plugin
+  get_url:  
+    url: http://ares.opengeo.org/geoserver/{{ geoserver_major_version }}.{{ geoserver_minor_version }}.x/community-latest/geoserver-{{ geoserver_major_version }}.{{ geoserver_minor_version }}-SNAPSHOT-gwc-s3-plugin.zip
+    dest: /etc/geoserver-2.12-SNAPSHOT-gwc-s3-plugin.zip
+    timeout: 120
+    
+- name: Extract gwc s3 plugin
+  unarchive:
+    src: /etc/geoserver-2.12-SNAPSHOT-gwc-s3-plugin.zip
+    dest: /var/lib/tomcat8/webapps/geoserver/WEB-INF/lib/
+ 
+- name: Delete gwc s3 zip
+  file:
+    path: /etc/geoserver-2.12-SNAPSHOT-gwc-s3-plugin.zip
+    state: absent    
+
+- name: Get the geotif s3 plugin
+  copy:
+    src: gs-s3-geotiff.zip
+    dest: /var/lib/tomcat8/webapps/geoserver/WEB-INF/lib/gs-s3-geotiff.zip
+    
+- name: Extract geotif s3 plugin
+  unarchive:
+    src: /var/lib/tomcat8/webapps/geoserver/WEB-INF/lib/gs-s3-geotiff.zip
+    dest: /var/lib/tomcat8/webapps/geoserver/WEB-INF/lib/
+ 
+- name: Delete geotif s3 zip
+  file:
+    path: /var/lib/tomcat8/webapps/geoserver/WEB-INF/lib/gs-s3-geotiff.zip
+    state: absent    
+    
+- name: restart tomcat
+  service:
+    name: tomcat8
+    state: restarted

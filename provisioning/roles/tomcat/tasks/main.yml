@@ -1,20 +1,20 @@
 ---
 
-- name: Ensure tomcat 7 is installed
+- name: Ensure tomcat 8 is installed
   apt:
     name: "{{ item }}"
     state: latest
     cache_valid_time: 86400
   with_items:
     - default-jdk
-    - tomcat7
+    - tomcat8
 
 - name: Configure memory for Tomcat
   template:
     src: setenv.sh
-    dest: /usr/share/tomcat7/bin/setenv.sh
+    dest: /usr/share/tomcat8/bin/setenv.sh
 
-- name: Configure java runtime for Tomcat
+- name: Copy the catalania file to make sure bcprov*.jar is skipped at run-time
   template:
-    src: tomcat7
-    dest: /etc/default/tomcat7
+    src: catalina.properties
+    dest: /var/lib/tomcat8/conf/catalina.properties

@@ -1,21 +1,142 @@
 ---
-# vim: foldmarker=[[[,]]]:foldmethod=marker
+# - name: Ensure repository key for ownCloud is in place for Ubuntu 18.04
+#   apt_key: url=https://download.owncloud.org/download/repositories/10.0/Ubuntu_18.04/Release.key state=present
+#   when: ansible_distribution_release == 'bionic'
 
-- include: 'system_package_management.yml'
-  tags: [ 'role::owncloud:pkg' ]
+# - name: Add ownCloud repository for Ubuntu 18.04
+#   apt_repository: repo='deb  http://download.owncloud.org/download/repositories/10.0/Ubuntu_18.04/ /'
+#   when: ansible_distribution_release == 'bionic'
 
-- include: 'tarballs.yml'
-  when: (owncloud__variant in ["nextcloud"])
+# - name: Only run "update_cache=yes" 
+#   apt:
+#     update_cache: yes
 
-- include: 'setup_owncloud.yml'
-  tags: [ 'role::owncloud:config' ]
+# - name: Install ownCloud
+#   apt: pkg=owncloud-files update_cache=yes
 
-- include: 'ldap.yml'
-  when: (owncloud__ldap_enabled | bool)
-  tags: [ 'role::owncloud:ldap' ]
 
-- include: 'theme.yml'
-  tags: [ 'role::owncloud:theme' ]
+- name: Get the owncloud zip
+  get_url:  
+    url: https://download.owncloud.org/community/owncloud-10.0.9.zip
+    dest: "/tmp/owncloud.zip"
+    timeout: 120
+    
+- name: Extract owncloud zip
+  unarchive:
+    src: "/tmp/owncloud.zip"
+    dest: "/var/www/html/"
 
-- include: 'copy.yml'
-  tags: [ 'role::owncloud:copy' ]
+
+- name: Set permissions for /var/www/html/owncloud/
+  file:
+    path: "{{owncloud_path}}"
+    recurse: yes
+    owner: www-data
+    group: www-data
+    mode: 0777
+ 
+# - name: Check if data directory is nfs mounted
+#   command: stat --file-system --format=%T {{owncloud_data_path}}
+#   changed_when: false
+#   failed_when: false
+#   check_mode: no
+#   register: owncloud__r_mount
+#   become: yes
+#   become_user: '{{owncloud_user}}'
+
+# - name: Make sure data directory exists when it is nfs mounted
+#   file: path='{{owncloud_data_path}}' state=directory mode=0750
+#   become: yes
+#   become_user: '{{owncloud_user}}'
+#   when: owncloud__r_mount.stdout == 'nfs'
+
+- name: Make sure data directory exists when it is not nfs mounted
+  file: path='{{owncloud_data_path}}' state=directory mode=0750 owner={{owncloud_user}} group={{owncloud_group}}
+  # when: owncloud__r_mount.stdout != 'nfs'
+
+- name: Find owncloud version
+  command: php -r 'include "version.php"; echo join(".", $OC_Version);'
+  args:
+    chdir: '{{owncloud_path}}'
+  register: owncloud__r_version
+  changed_when: false
+  check_mode: no
+
+#   # Synchronize two directories on one remote host.
+# - synchronize:
+#     src: /var/www/owncloud
+#     dest: "{{owncloud_path}}"
+
+- name: Drop configuration file
+  template: dest={{owncloud_path}}/config/config.php src=config.php.j2 mode=0640 owner={{owncloud_user}} group={{owncloud_group}}
+
+- name: Add apache vhosts configuration.
+  template:
+    src: "owncloud.conf.j2"
+    dest: "{{ apache_conf_path }}/sites-available/owncloud.conf"
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart apache
+  when: apache_create_vhosts
+
+- name: Add vhost symlink in sites-enabled.
+  file:
+    src: "{{ apache_conf_path }}/sites-available/owncloud.conf"
+    dest: "{{ apache_conf_path }}/sites-enabled/owncloud.conf"
+    state: link
+  notify: restart apache
+  when: apache_create_vhosts
+
+- name: ensure database exists
+  mysql_db:
+    name: "{{ owncloud_db_name }}"
+    encoding: utf8
+    collation: utf8_general_ci
+  register: owncloud_database
+
+- name: ensure database user exists
+  mysql_user:
+    name: "{{ owncloud_db_user }}"
+    host: localhost
+    password: "{{ owncloud_db_pass }}"
+    priv: "{{ owncloud_db_name }}.*:ALL"
+
+- name: Check if owncloud has been initialized
+  stat: path={{owncloud_data_path}}/.ocdata
+  register: owncloud__r_init
+  become: yes
+  become_user: '{{owncloud_user}}'
+
+- name: Mark instance not installed
+  lineinfile: dest={{owncloud_path}}/config/config.php regexp="^  'installed' =>" state=absent
+  when: not owncloud__r_init.stat.exists
+
+- name: Initialize
+  command: php occ maintenance:install --data-dir='{{owncloud_data_path}}' --admin-user '{{owncloud_admin}}' --admin-pass '{{owncloud_admin_pass}}' --database '{{owncloud_db_type}}' --database-name '{{owncloud_db_name}}' --database-host '{{owncloud_db_host}}' --database-user '{{owncloud_db_user}}' --database-pass '{{owncloud_db_pass}}'
+  args:
+    chdir: '{{owncloud_path}}'
+  become: yes
+  become_user: '{{owncloud_user}}'
+  when: not owncloud__r_init.stat.exists
+
+# - include: user_ldap.yml
+#   when: hostvars[owncloud_app_servers[0]].ansible_fqdn == ansible_fqdn
+
+- include: memcache.yml
+
+- include: logging.yml
+
+- include: theme.yml
+
+- include: appstore.yml
+
+- include: background_jobs.yml
+
+- include: email_server.yml
+
+- include: antivirus.yml
+
+# - include: documents.yml
+
+- include: fix_permissions.yml

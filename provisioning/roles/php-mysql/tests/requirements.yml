@@ -1,0 +1,5 @@
+---
+- src: repo-remi
+- src: apache
+- src: mysql
+- src: php

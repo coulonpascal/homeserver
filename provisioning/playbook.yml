@@ -1,14 +1,15 @@
 ---
 
 - hosts: default
+  vars:
+    php_version: '7.0'
   roles:
-    - common
-    - debops.secret
-    - geerlingguy.nodejs
-    - tools    
+    - tools
     - apache
-    - apache-dev
-    - postgres
-    - xfce
-    - fluxbox
+    - php-versions
+    - php
+    - mysql
+    - php-mysql
     - owncloud
+    
+    
