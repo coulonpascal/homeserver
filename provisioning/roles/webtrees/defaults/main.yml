@@ -1,0 +1,18 @@
+---
+# General
+webtrees_url: 'http://localhost/webtrees/'
+webtrees_trusted_domains: [localhost]
+webtrees_admin_email: root@localhost
+webtrees_path: /var/www/html/webtrees
+webtrees_user: www-data
+webtrees_group: www-data
+webtrees_admin: admin
+webtrees_admin_pass: password
+
+# Database
+webtrees_db_type: mysql
+webtrees_db_name: owncloud
+webtrees_db_user: webtrees_admin
+webtrees_db_pass: password
+webtrees_db_host: localhost
+

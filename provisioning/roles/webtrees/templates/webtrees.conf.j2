@@ -1,0 +1,14 @@
+Alias /owncloud "{{webtrees_path}}"
+
+<Directory "{{webtrees_path}}">
+  Options +FollowSymlinks
+  AllowOverride All
+
+ <IfModule mod_dav.c>
+  Dav off
+ </IfModule>
+
+ SetEnv HOME "{{webtrees_path}}"
+ SetEnv HTTP_HOME "{{webtrees_path}}"
+
+</Directory>

@@ -1,0 +1,53 @@
+---
+- name: Get the webtrees zip
+  get_url:  
+    url: https://launchpad.net/webtrees/1.7/1.7.9/+download/webtrees-1.7.9.zip
+    dest: "/tmp/webtrees.zip"
+    timeout: 120
+    
+- name: Extract webtrees zip
+  unarchive:
+    src: "/tmp/webtrees.zip"
+    dest: "/var/www/html/"
+
+
+- name: Set permissions for /var/www/html/webtrees/
+  file:
+    path: "{{webtrees_path}}"
+    recurse: yes
+    owner: www-data
+    group: www-data
+    mode: 0777
+
+
+- name: Add apache vhosts configuration.
+  template:
+    src: "webtrees.conf.j2"
+    dest: "{{ apache_conf_path }}/sites-available/webtrees.conf"
+    owner: root
+    group: root
+    mode: 0644
+  notify: restart apache
+  when: apache_create_vhosts
+
+- name: Add vhost symlink in sites-enabled.
+  file:
+    src: "{{ apache_conf_path }}/sites-available/webtrees.conf"
+    dest: "{{ apache_conf_path }}/sites-enabled/webtrees.conf"
+    state: link
+  notify: restart apache
+  when: apache_create_vhosts
+
+- name: ensure database exists
+  mysql_db:
+    name: "{{ webtrees_db_name }}"
+    encoding: utf8
+    collation: utf8_general_ci
+  register: webtrees_database
+
+- name: ensure database user exists
+  mysql_user:
+    name: "{{ webtrees_db_user }}"
+    host: localhost
+    password: "{{ webtrees_db_pass }}"
+    priv: "{{ webtrees_db_name }}.*:ALL"
